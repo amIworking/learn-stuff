@@ -1,0 +1,25 @@
+import pathlib
+
+from pydantic import Extra
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    SQL_PATH: str
+    ASYNC_ENGINE: str
+    SYNC_ENGINE: str
+
+    @property
+    def DATABASE_URL_async(self):
+        return f'{self.ASYNC_ENGINE}:{self.SQL_PATH}'
+
+    @property
+    def DATABASE_URL_sync(self):
+        return f'{self.SYNC_ENGINE}:{self.SQL_PATH}'
+
+    model_config = SettingsConfigDict(
+        env_file=f'{pathlib.Path(__file__).resolve().parent.parent}/.env',
+        extra="allow"
+    )
+
+settings = Settings()
