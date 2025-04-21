@@ -37,7 +37,5 @@ class Resume(Base):
     compensation: Mapped[int | None] = mapped_column(Integer, nullable=True)
     workload: Mapped[Workload]
     worker_id: Mapped[int] = mapped_column(ForeignKey('workers.id', ondelete='CASCADE'))
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now(DT.UTC))
-    updated_at: Mapped[datetime] = mapped_column(
-        onupdate=datetime.now(DT.UTC)
-    )
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    #updated_at: Mapped[datetime] = mapped_column(onupdate=datetime.now)

@@ -1,7 +1,4 @@
-from typing import Annotated
-
-from fastapi import Depends
-from sqlalchemy import text, insert
+from sqlalchemy import text, select, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import async_engine, async_session_maker, Base
@@ -17,21 +14,38 @@ async def get_db() -> AsyncSession:
 
 
 
-async def create_tables():
-    async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
 
+class AsyncCoreQueries:
+    @staticmethod
+    async def get_version():
+        async with async_engine.connect() as ac:
+            res = await ac.execute(text('SELECT VERSION()'))
+            print(f'{res.first()=}')
+            # yield res
 
-async def get_version():
-    async with async_engine.connect() as ac:
-        res = await ac.execute(text('SELECT VERSION()'))
-        print(f'{res.first()=}')
-        # yield res
+    @staticmethod
+    async def create_tables():
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
 
+    @staticmethod
+    async def select_data():
+        async with async_engine.begin() as ac:
+            query = select(Worker).filter_by(id=1)
+            res = await ac.execute(query)
+            print(res.first())
 
-async def insert_data():
-    new_worker: Worker = Worker(username='test6')
-    async with async_session_maker() as ac:
-        ac.add(new_worker)
-        await ac.commit()
+    @staticmethod
+    async def insert_data():
+        async with async_engine.connect() as ac:
+            query = insert(Worker).values(username='Petr')
+            await ac.execute(query)
+            await ac.commit()
+
+    @staticmethod
+    async def update_data():
+        async with async_engine.connect() as ac:
+            query = update(Worker).filter_by(username='Petr').values(username='Igor')
+            await ac.execute(query)
+            await ac.commit()
