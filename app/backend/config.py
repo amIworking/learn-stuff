@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     SQL_PATH: str
     ASYNC_ENGINE: str
     SYNC_ENGINE: str
+    SECRET_KEY: str
+    ALGORITHM: str
 
     @property
     def DATABASE_URL_async(self):
@@ -18,7 +20,7 @@ class Settings(BaseSettings):
         return f'{self.SYNC_ENGINE}:{self.SQL_PATH}'
 
     model_config = SettingsConfigDict(
-        env_file=f'{pathlib.Path(__file__).resolve().parent.parent}/.env',
+        env_file=f'{pathlib.Path(__file__).resolve().parent.parent.parent}/.env',
         extra="allow"
     )
 

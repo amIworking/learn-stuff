@@ -1,12 +1,13 @@
 import enum
 from datetime import datetime
-import datetime as DT
 
-from sqlalchemy import MetaData, Table, Integer, String, Column, ForeignKey, func
+from sqlalchemy import Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql.annotation import Annotated
 
-from app.db import Base
+from app.backend.db import Base
+from app.models.mixins.id_mixins import IDMixin
+from app.models.mixins.timestamps_mixins import TimestampsMixin
+
 
 # metadata_obj = MetaData()
 #
@@ -39,3 +40,18 @@ class Resume(Base):
     worker_id: Mapped[int] = mapped_column(ForeignKey('workers.id', ondelete='CASCADE'))
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
     #updated_at: Mapped[datetime] = mapped_column(onupdate=datetime.now)
+#
+# class UserRoles(enum.Enum):
+#     admin = 'admin'
+#     user = 'user'
+#
+# class User(IDMixin, TimestampsMixin, Base):
+#     __tablename__ = "users"
+#
+#     email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+#     password: Mapped[str] = mapped_column(String(32), nullable=False)
+#     username: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+#     fullname: Mapped[str | None] = mapped_column(String(200), default=None)
+#     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+#     is_superuser: Mapped[bool]  = mapped_column(Boolean, default=False)
+#     role: Mapped[UserRoles] = mapped_column(default=UserRoles.user)
