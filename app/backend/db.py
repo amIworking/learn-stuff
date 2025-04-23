@@ -1,17 +1,20 @@
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
 from app.backend.config import settings
 
-# sync_engine = create_engine(
-#     url=settings.DATABASE_URL_sync,
-#     echo=True
-# )
-#
 # with sync_engine.connect() as conn:
 #     res = conn.execute(text('SELECT VERSION()'))
 #     print(f'{res=}')
 #
+
+sync_engine = create_engine(
+    url=settings.DATABASE_URL_sync,
+    echo=True
+)
+
+
 async_engine = create_async_engine(
     url=settings.DATABASE_URL_async,
     echo=True

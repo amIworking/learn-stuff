@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     SQL_PATH: str
+    TEST_SQL_PATH: str
     ASYNC_ENGINE: str
     SYNC_ENGINE: str
     SECRET_KEY: str
@@ -18,6 +19,14 @@ class Settings(BaseSettings):
     @property
     def DATABASE_URL_sync(self):
         return f'{self.SYNC_ENGINE}:{self.SQL_PATH}'
+
+    @property
+    def TEST_DATABASE_URL_async(self):
+        return f'{self.ASYNC_ENGINE}:{self.TEST_SQL_PATH}'
+
+    @property
+    def TEST_DATABASE_URL_sync(self):
+        return f'{self.SYNC_ENGINE}:{self.TEST_SQL_PATH}'
 
     model_config = SettingsConfigDict(
         env_file=f'{pathlib.Path(__file__).resolve().parent.parent.parent}/.env',

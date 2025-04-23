@@ -1,7 +1,9 @@
 
 from uuid import UUID
 
-from sqlalchemy import select
+from pydantic import parse_obj_as
+from sqlalchemy import select, ScalarResult
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.backend.db import async_engine, Base, async_session_maker
 from app.models.depends.uuid_depends import get_uuid_or_str
@@ -47,11 +49,12 @@ class AsyncUserQueries:
             await conn.run_sync(Base.metadata.create_all)
 
     @staticmethod
-    async def create_user(user_data: CreateUser):
+    async def create_user(user_data: CreateUser) -> dict:
         print(user_data)
         new_user_data: dict = user_data.model_dump()
         new_user_data.pop('raw_password')
         new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
+        res: dict = {}
         async with async_session_maker() as conn:
             new_user: User = User(**new_user_data)
             conn.add(new_user)
@@ -60,20 +63,77 @@ class AsyncUserQueries:
                 select(User)
                 .filter_by(email=user_data.email)
             )
+            res = ShowUser(**user.__dict__).model_dump()
             await conn.delete(user)
             await conn.commit()
             print()
+        return res
 
     @staticmethod
-    async def show_user(id_or_username: str):
+    async def create_users(
+            users_data: list[CreateUser],
+            session_maker = async_session_maker
+    ) -> list[User]:
+        print(users_data)
+        res: list[dict] = []
+        new_users: list[User] = []
+        all_new_users_emails: list = []
+        async with session_maker() as conn:
+            for user_data in users_data:
+                new_user_data: dict = user_data.model_dump()
+                new_user_data.pop('raw_password')
+                new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
+                new_users.append(User(**new_user_data))
+                all_new_users_emails.append(user_data.email)
+            conn.add_all(new_users)
+            await conn.commit()
+            users: list[User] = (
+                await conn.scalars(
+                    select(User)
+                    .where(User.email.in_(all_new_users_emails))
+                )
+            ).all()
+            res = [ShowUser(**user.__dict__).model_dump() for user in users]
+        return users
+    #
+    # @staticmethod
+    # async def create_users(users_data: list[CreateUser], conn: AsyncSession) -> list[User]:
+    #     print(users_data)
+    #     res: list[dict] = []
+    #     new_users: list[User] = []
+    #     all_new_users_emails: list = []
+    #     for user_data in users_data:
+    #         new_user_data: dict = user_data.model_dump()
+    #         new_user_data.pop('raw_password')
+    #         new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
+    #         new_users.append(User(**new_user_data))
+    #         all_new_users_emails.append(user_data.email)
+    #     conn.add_all(new_users)
+    #     await conn.commit()
+    #     users = (
+    #         await conn.scalars(
+    #             select(User)
+    #             .where(User.email.in_(all_new_users_emails))
+    #         )
+    #     ).all()
+    #     res = [ShowUser(**user.__dict__).model_dump() for user in users]
+    #     return users
+
+    @staticmethod
+    async def show_user(
+            id_or_username: str,
+            session_maker = async_session_maker
+    ):
         uuid_or_str: UUID | str = await get_uuid_or_str(id_or_username)
-        async with async_session_maker() as conn:
+        async with session_maker() as conn:
             user: User | None = None
             if isinstance(uuid_or_str, UUID):
                 user = await conn.get(User, id_or_username)
             elif isinstance(uuid_or_str, str):
                 user = await conn.scalar(select(User).filter_by(username=id_or_username))
-            print(user)
+            if user:
+                res = ShowUser(**user.__dict__)
+                return res.model_dump()
 
     @staticmethod
     async def update_user(user_id: UUID):
