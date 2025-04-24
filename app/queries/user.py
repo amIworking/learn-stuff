@@ -11,6 +11,9 @@ from app.models.user import User
 from app.schemas.user import CreateUser, ShowUser
 from app.routers.auth import bcrypt_context, oauth2_scheme, get_current_user
 
+async def get_async_db_conn():
+    async with async_session_maker() as conn:
+        yield conn
 
 class AsyncUserQueries:
     @staticmethod
@@ -55,6 +58,8 @@ class AsyncUserQueries:
         new_user_data.pop('raw_password')
         new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
         res: dict = {}
+        # conn = get_async_db_conn()
+        await conn
         async with async_session_maker() as conn:
             new_user: User = User(**new_user_data)
             conn.add(new_user)
@@ -71,20 +76,19 @@ class AsyncUserQueries:
 
     @staticmethod
     async def create_users(
-            users_data: list[CreateUser],
-            session_maker = async_session_maker
+            users_data: list[CreateUser]
     ) -> list[User]:
         print(users_data)
         res: list[dict] = []
         new_users: list[User] = []
         all_new_users_emails: list = []
-        async with session_maker() as conn:
-            for user_data in users_data:
-                new_user_data: dict = user_data.model_dump()
-                new_user_data.pop('raw_password')
-                new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
-                new_users.append(User(**new_user_data))
-                all_new_users_emails.append(user_data.email)
+        for user_data in users_data:
+            new_user_data: dict = user_data.model_dump()
+            new_user_data.pop('raw_password')
+            new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
+            new_users.append(User(**new_user_data))
+            all_new_users_emails.append(user_data.email)
+        async with async_session_maker() as conn:
             conn.add_all(new_users)
             await conn.commit()
             users: list[User] = (
@@ -93,39 +97,13 @@ class AsyncUserQueries:
                     .where(User.email.in_(all_new_users_emails))
                 )
             ).all()
-            res = [ShowUser(**user.__dict__).model_dump() for user in users]
+            # res = [ShowUser(**user.__dict__).model_dump() for user in users]
         return users
-    #
-    # @staticmethod
-    # async def create_users(users_data: list[CreateUser], conn: AsyncSession) -> list[User]:
-    #     print(users_data)
-    #     res: list[dict] = []
-    #     new_users: list[User] = []
-    #     all_new_users_emails: list = []
-    #     for user_data in users_data:
-    #         new_user_data: dict = user_data.model_dump()
-    #         new_user_data.pop('raw_password')
-    #         new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
-    #         new_users.append(User(**new_user_data))
-    #         all_new_users_emails.append(user_data.email)
-    #     conn.add_all(new_users)
-    #     await conn.commit()
-    #     users = (
-    #         await conn.scalars(
-    #             select(User)
-    #             .where(User.email.in_(all_new_users_emails))
-    #         )
-    #     ).all()
-    #     res = [ShowUser(**user.__dict__).model_dump() for user in users]
-    #     return users
 
     @staticmethod
-    async def show_user(
-            id_or_username: str,
-            session_maker = async_session_maker
-    ):
+    async def show_user(id_or_username: str):
         uuid_or_str: UUID | str = await get_uuid_or_str(id_or_username)
-        async with session_maker() as conn:
+        async with async_session_maker() as conn:
             user: User | None = None
             if isinstance(uuid_or_str, UUID):
                 user = await conn.get(User, id_or_username)

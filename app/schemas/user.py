@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field, EmailStr
 
 class BaseUser(BaseModel):
     fullname: Annotated[str | None, Field(min_length=1, max_length=300)] = None
-    username: Annotated[str, Field(min_length=4, max_length=50)]
+    username: Annotated[str, Field(min_length=4, max_length=32)]
     email: Annotated[EmailStr, Field(max_length=300)]
 
 class UpdateUserPassword(BaseModel):
@@ -20,6 +20,7 @@ class CreateUser(BaseUser):
 class ShowUser(BaseUser):
     id: Annotated[UUID, Field()]
     role: str
+    is_active: bool
 
 class UpdateUser(BaseModel):
     fullname: Annotated[str | None, Field(min_length=1, max_length=300)] = None
