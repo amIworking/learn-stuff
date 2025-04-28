@@ -1,11 +1,9 @@
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from sqlalchemy import select, insert, update
+from sqlalchemy import select
 
 from app.backend.config import settings
-from app.models.user import User
+from app.auth.model import User
 from app.backend.db_depends import get_db
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession

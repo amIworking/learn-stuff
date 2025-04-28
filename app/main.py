@@ -1,8 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
 
-from app.routers import auth, user
-from app.routers.config import root_api
+from app.auth import user_router, auth_router
+from app.backend.config import ROOT_API
 
 
 app = FastAPI()
@@ -11,13 +11,13 @@ app_v1 = FastAPI()
 
 app.mount("/v1", app_v1)
 
-@app.get(root_api+"/")
+@app.get(ROOT_API + "/")
 async def welcome() -> dict:
     return {"message": "My todo app"}
 
 
-app.include_router(auth.router)
-app.include_router(user.router)
+app.include_router(user_router.router)
+app.include_router(auth_router.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8888)

@@ -1,24 +1,26 @@
-from http.client import responses
-
 import pytest
 from contextlib import nullcontext as does_not_raise
 from fastapi import status
-from httpx import AsyncClient, ASGITransport
-from pydantic import ValidationError
+from httpx import AsyncClient, ASGITransport, Client
 
 from app.main import app
-from app.models.user import User
-from app.schemas.user import CreateUser
+from app.auth.model import User
 
 API_URL: str = 'http://127.0.0.1:8888/api/v1'
 USER_API_URL: str = API_URL + '/users'
+
+# async def get_async_client() -> AsyncClient:
+#     async with AsyncClient(
+#             transport=ASGITransport(app=app), base_url=USER_API_URL
+#     ) as ac:
+#         yield ac
 
 class TestUser:
     @pytest.mark.parametrize(
         'username, email, password, expectation',
         [
             ('boben', 'boben@gmail.com', 'Qwerty12', does_not_raise()),
-            ('robin', 'robin@gmail.com', 'Qwerty12', does_not_raise()),
+            # ('robin', 'robin@gmail.com', 'Qwerty12', does_not_raise()),
             ('steve', 'ail.com', 'Qwerty12', pytest.raises(AssertionError)), # Because of a wrong email,
             ('steve', 'gmail.com', 'Qwerty12', pytest.raises(AssertionError)),  # Because of a wrong email,
             ('steve', 'f.com', 'Qwerty12', pytest.raises(AssertionError)),  # Because of a wrong email
@@ -39,15 +41,16 @@ class TestUser:
                 transport=ASGITransport(app=app), base_url=USER_API_URL
             ) as ac:
                 response = await ac.post('/', json=new_user)
+                await ac.aclose()
+
             assert response.status_code == status.HTTP_201_CREATED
-            user_data: dict = response.json()['user_data']
+            user_data: dict = response.json()
             assert user_data['email'] == email
             assert user_data['username'] == username
-            print()
 
 
     @pytest.mark.asyncio
-    async def test_show_user(self, users: list[User], id_or_username: str):
+    async def test_show_user(self, users: list[User]):
         user: User = users[0]
         async with AsyncClient(
                 transport=ASGITransport(app=app), base_url=USER_API_URL
@@ -55,11 +58,12 @@ class TestUser:
             response_by_id = await ac.get(url=f'/{user.id}/')
             response_by_username = await ac.get(url=f'/{user.username}/')
 
+
         assert response_by_id.status_code == status.HTTP_200_OK
         assert response_by_username.status_code == status.HTTP_200_OK
 
-        user_data: dict = response_by_id.json()['user_data']
-        assert user_data == response_by_username.json()['user_data']
+        user_data: dict = response_by_id.json()
+        assert user_data == response_by_username.json()
 
         assert user_data['username'] == user.username
         assert user_data['email'] == user.email

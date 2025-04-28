@@ -1,15 +1,14 @@
 
 from uuid import UUID
 
-from pydantic import parse_obj_as
-from sqlalchemy import select, ScalarResult
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy import select
 
 from app.backend.db import async_engine, Base, async_session_maker
-from app.models.depends.uuid_depends import get_uuid_or_str
-from app.models.user import User
-from app.schemas.user import CreateUser, ShowUser
-from app.routers.auth import bcrypt_context, oauth2_scheme, get_current_user
+from app.depends.model_depends.uuid_depends import get_uuid_or_str
+from app.auth.model import User
+from app.auth.schema import CreateUser, ShowUser
+from app.auth.auth_router import bcrypt_context
+
 
 async def get_async_db_conn():
     async with async_session_maker() as conn:

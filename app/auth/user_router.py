@@ -1,23 +1,19 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from pydantic import Field
 # from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy import select, insert, update
-from sqlalchemy.orm import Bundle, load_only
+from sqlalchemy.orm import Bundle
 
-from app.models.depends.uuid_depends import get_uuid_or_str
-from app.models.user import User
-from app.routers.auth import bcrypt_context, oauth2_scheme, get_current_user
-from app.routers.config import root_api
-from app.schemas.user import CreateUser, ShowUser
+from app.depends.model_depends.uuid_depends import get_uuid_or_str
+from app.auth.model import User
+from app.auth.auth_router import bcrypt_context, get_current_user
+from app.backend.config import ROOT_API
+from app.auth.schema import CreateUser, ShowUser
 from app.backend.db_depends import get_db
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from passlib.context import CryptContext
-from datetime import datetime, timedelta
 
 
 async def get_user_data_or_none(
@@ -62,9 +58,12 @@ async def get_user_or_none(
         user = await db.scalar(select(User).where(User.username == id_or_username))
     return user
 
-router = APIRouter(prefix=root_api+'/users', tags=['users'])
+router = APIRouter(prefix=ROOT_API + '/users', tags=['users'])
 
-@router.post(path='/', status_code=status.HTTP_201_CREATED)
+
+
+
+@router.post(path='/', status_code=status.HTTP_201_CREATED, response_model=ShowUser)
 async def create_user(db: Annotated[AsyncSession, Depends(get_db)], new_user_raw: CreateUser):
     new_user_data: dict = new_user_raw.model_dump()
     new_user_data.pop('raw_password')
@@ -74,13 +73,14 @@ async def create_user(db: Annotated[AsyncSession, Depends(get_db)], new_user_raw
     if not new_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="this user doesn\'t exist")
     user_data: dict = new_user.__dict__
-    user_data['role'] = new_user.role.value
+    #user_data['role'] = new_user.role.value
     await db.commit()
-    return {
-        'user_data': ShowUser(**user_data),
-        'status_code': status.HTTP_201_CREATED,
-        'transaction': 'Successful'
-    }
+    # return {
+    #     'user_data': ShowUser(**user_data),
+    #     'status_code': status.HTTP_201_CREATED,
+    #     'transaction': 'Successful'
+    # }
+    return new_user
 
 
 #
@@ -88,7 +88,7 @@ async def create_user(db: Annotated[AsyncSession, Depends(get_db)], new_user_raw
 # async def read_current_user(user: User = Depends(oauth2_scheme)):
 #     return user
 
-@router.get('/{id_or_username}')
+@router.get('/{id_or_username}', response_model=ShowUser)
 async def show_user(
         db: Annotated[AsyncSession, Depends(get_db)],
         id_or_username: Annotated[UUID | str, Depends(get_uuid_or_str)]
@@ -96,12 +96,12 @@ async def show_user(
     user: User | None = await get_user_or_none(db, id_or_username)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="this user doesn\'t exist")
-    response = {
-        'status_code': status.HTTP_200_OK,
-        'transaction': 'Successful',
-        'item': ShowUser(**user.__dict__)
-    }
-    return response
+    # response = {
+    #     'status_code': status.HTTP_200_OK,
+    #     'transaction': 'Successful',
+    #     'item': ShowUser(**user.__dict__)
+    # }
+    return user
 
 @router.delete('/delete')
 async def delete_user(

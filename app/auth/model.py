@@ -3,8 +3,8 @@ import enum
 from sqlalchemy import String, Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.models.mixins.id_mixins import IDMixin
-from app.models.mixins.timestamps_mixins import TimestampsMixin
+from app.mixins.model_mixins.id_mixins import IDMixin
+from app.mixins.model_mixins.timestamps_mixins import TimestampsMixin
 
 
 class UserRoles(enum.Enum):

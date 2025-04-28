@@ -1,11 +1,10 @@
-import pytest
 import pytest_asyncio
 
 from app.backend.db import async_session_maker
-from app.models.user import User
+from app.auth.model import User
 
 from app.queries.user import AsyncUserQueries
-from app.schemas.user import CreateUser
+from app.auth.schema import CreateUser
 
 
 @pytest_asyncio.fixture(loop_scope='function')
@@ -28,3 +27,17 @@ async def delete_users(users: list[User]):
             await conn.commit()
         except:
             pass
+
+# mock_session = AsyncMock()
+#
+# async def get_db_override():
+#     async with mock_session as conn:
+#         yield conn
+#
+# app.dependency_overrides[get_db] = get_db_override
+#
+# @pytest_asyncio.fixture
+# def mock_db_session():
+#     return mock_session
+
+

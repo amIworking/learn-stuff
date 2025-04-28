@@ -3,6 +3,7 @@ import pathlib
 from pydantic import Extra
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+ROOT_API: str = '/api/v1'
 
 class Settings(BaseSettings):
     MODE: str

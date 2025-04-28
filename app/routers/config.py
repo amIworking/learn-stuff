@@ -1,1 +1,0 @@
-root_api: str = '/api/v1'
