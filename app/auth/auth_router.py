@@ -45,7 +45,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get('sub')
         user_id: int = payload.get('id')
-        is_admin: str = payload.get('is_superuser')
+        is_admin: bool = payload.get('is_superuser')
         expire = payload.get('exp')
         if username is None or user_id is None:
             raise HTTPException(

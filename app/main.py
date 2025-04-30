@@ -6,7 +6,9 @@ from app.backend.config import ROOT_API
 
 
 app = FastAPI()
-app_v1 = FastAPI()
+app_v1 = FastAPI(
+    redirect_slashes=False
+)
 
 
 app.mount("/v1", app_v1)

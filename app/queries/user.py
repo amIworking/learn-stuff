@@ -58,7 +58,6 @@ class AsyncUserQueries:
         new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
         res: dict = {}
         # conn = get_async_db_conn()
-        await conn
         async with async_session_maker() as conn:
             new_user: User = User(**new_user_data)
             conn.add(new_user)
@@ -89,15 +88,10 @@ class AsyncUserQueries:
             all_new_users_emails.append(user_data.email)
         async with async_session_maker() as conn:
             conn.add_all(new_users)
+            new_users[-1].is_superuser = True
             await conn.commit()
-            users: list[User] = (
-                await conn.scalars(
-                    select(User)
-                    .where(User.email.in_(all_new_users_emails))
-                )
-            ).all()
             # res = [ShowUser(**user.__dict__).model_dump() for user in users]
-        return users
+        return new_users
 
     @staticmethod
     async def show_user(id_or_username: str):

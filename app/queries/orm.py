@@ -2,12 +2,11 @@ from sqlalchemy import select, func, cast, Integer, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.backend.db import async_session_maker
-from app.models.models1 import Worker, Resume
 
 
-async def get_db() -> AsyncSession:
-    async with async_session_maker() as ac:
-        yield ac
+# async def get_db() -> AsyncSession:
+#     async with async_session_maker() as ac:
+#         yield ac
 class AsyncOrmQueries:
 
     @staticmethod
