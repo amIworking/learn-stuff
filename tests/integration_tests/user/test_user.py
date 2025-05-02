@@ -18,6 +18,7 @@ async def async_client():
     async with AsyncClient(transport=transport, base_url=USER_API_URL) as client:
         yield client
 
+# TODO: Can't run more than 1 test in pytest. They fail with RuntimeError. Now idk how to fix it
 
 @pytest.mark.usefixtures("async_setup")
 class TestUser:
@@ -48,37 +49,48 @@ class TestUser:
 
     @pytest.mark.asyncio
     async def test_update_user(self, users, async_client, db_test):
-        user: User = await db_test.scalar(select(User).filter_by(is_superuser=False))
-        admin: User = await db_test.scalar(select(User).filter_by(is_superuser=True))
-        UPDATE_URL: str = f'/{user.id}/update'
+        user = await db_test.scalar(select(User).filter_by(is_superuser=False))
+        admin = await db_test.scalar(select(User).filter_by(is_superuser=True))
+        UPDATE_USER_URL: str = f'/{user.id}/update'
+        UPDATE_ADMIN_URL: str = f'/{admin.id}/update'
         updated_fields: dict = {
-            'fullname': 'Ivan Ivanov'
+            'fullname': 'New Fullname',
+            'username': 'new_username'
         }
 
-        response = await async_client.put(url=UPDATE_URL, json=updated_fields)
+        response = await async_client.put(url=UPDATE_USER_URL, json=updated_fields)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED # Not Auth
         assert response.json()['detail'] == 'Not authenticated'
 
         app.dependency_overrides[get_current_user] = mock_get_user
-        response = await async_client.put(url=UPDATE_URL, json=updated_fields)
-        assert response.status_code == status.HTTP_401_UNAUTHORIZED # Not Admin
+        response = await async_client.put(url=UPDATE_USER_URL, json=updated_fields)
+        assert response.status_code == status.HTTP_403_FORBIDDEN # Not Admin
         assert response.json()['detail'] == "You don't have admin permission"
 
         app.dependency_overrides[get_current_user] = mock_get_admin
 
         assert admin.fullname != updated_fields.get('fullname')
-        response = await async_client.put(url=f'{admin.id}', json=updated_fields)
+        response = await async_client.put(url=UPDATE_ADMIN_URL, json=updated_fields)
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json()['detail'] == "You can't change other admins' data"
         await db_test.refresh(admin)
         assert admin.fullname != updated_fields.get('fullname')
 
         assert user.fullname != updated_fields.get('fullname')
-        response = await async_client.put(url=UPDATE_URL, json=updated_fields)
+        response = await async_client.put(url=UPDATE_USER_URL, json=updated_fields)
         assert response.status_code == status.HTTP_200_OK
-        assert response.json()['detail'] == 'User has been successfully deleted'
+        assert response.json()['detail'] == 'User has been successfully updated'
         await db_test.refresh(user)
-        assert user.fullname != updated_fields.get('fullname')
+        assert user.fullname == updated_fields.get('fullname')
+        assert user.username == updated_fields.get('username')
+
+        updated_fields['username'] = admin.username
+        assert user.username != updated_fields['username']
+        response = await async_client.put(url=UPDATE_USER_URL, json=updated_fields)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.json()['detail'] == "This username is already taken"
+        await db_test.refresh(user)
+        assert user.username != updated_fields['username']
 
 
     # @pytest.mark.asyncio

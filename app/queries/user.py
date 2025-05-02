@@ -84,11 +84,13 @@ class AsyncUserQueries:
             new_user_data: dict = user_data.model_dump()
             new_user_data.pop('raw_password')
             new_user_data['password'] = bcrypt_context.hash(user_data.raw_password)
-            new_users.append(User(**new_user_data))
+            new_user: User = User(**new_user_data)
+            if 'admin' in new_user.fullname.lower():
+                new_user.is_superuser = True
+            new_users.append(new_user)
             all_new_users_emails.append(user_data.email)
         async with async_session_maker() as conn:
             conn.add_all(new_users)
-            new_users[-1].is_superuser = True
             await conn.commit()
             # res = [ShowUser(**user.__dict__).model_dump() for user in users]
         return new_users

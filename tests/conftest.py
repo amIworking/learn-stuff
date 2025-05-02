@@ -9,6 +9,7 @@ from app.backend.db import sync_engine, Base, async_engine, async_session_maker
 
 DEFAULT_DROP_DB_FLAG: str = 'false'
 
+# TODO: Can't run more than 1 test in pytest. They fail with RuntimeError. Now idk how to fix it
 
 # @pytest.fixture(scope='session', autouse=True)
 # def setup_db():
@@ -18,11 +19,11 @@ DEFAULT_DROP_DB_FLAG: str = 'false'
 #     Base.metadata.drop_all(sync_engine)
 #     Base.metadata.create_all(sync_engine)
 
-@pytest.fixture(scope='session')
-def create_db():
-    assert settings.MODE == 'TEST'
-    if not database_exists(sync_engine.url):
-        create_database(sync_engine.url)
+# @pytest.fixture(scope='session')
+# def create_db():
+#     assert settings.MODE == 'TEST'
+#     if not database_exists(sync_engine.url):
+#         create_database(sync_engine.url)
 
 @pytest_asyncio.fixture(scope='function',autouse=True)
 async def async_setup():

@@ -131,7 +131,7 @@ class UserManager:
             elif not get_user['is_superuser']:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail="You can't change other users' data"
+                    detail="You don't have admin permission"
                 )
 
         for key, value in updated_data.model_dump().items():
@@ -150,5 +150,5 @@ class UserManager:
             await db.commit()
         return {
             'status_code': status.HTTP_200_OK,
-            'detail': 'User data successfully updated'
+            'detail': 'User has been successfully updated'
         }

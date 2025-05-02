@@ -56,7 +56,7 @@ async def delete_user(
     return result
 
 @router.put('/{user_id}/update', response_model=dict)
-async def delete_user(
+async def update_user(
         db: Annotated[AsyncSession, Depends(get_db)],
         get_user: Annotated[dict, Depends(get_current_user)],
         user_id: Annotated[UUID, Path()],

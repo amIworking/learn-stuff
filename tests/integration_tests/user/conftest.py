@@ -87,22 +87,28 @@ async def users_data_and_status() -> list:
 async def users():
     users: list = [
         CreateUser(
-            username='testtest',
-            email='testtest@mail.run',
-            raw_password='213213werQ',
-            fullname='Petr Petrov'
-        ),
-        CreateUser(
             username='testtest1',
             email='testtest1@mail.run',
-            fullname='Igor Igorev',
+            raw_password='213213werQ',
+            fullname='User Petrov'
+        ),
+        CreateUser(
+            username='testtest2',
+            email='testtest2@mail.run',
+            fullname='User Igorev',
             raw_password='213213werQ'
         ),
         CreateUser(
             username='adminadmin',
             email='adminadmin@mail.run',
             raw_password='213213werQ',
-            fullname='Admin Smith'
+            fullname='Admin Smith',
+        ),
+        CreateUser(
+            username='adminadmin2',
+            email='adminadmin2@mail.run',
+            raw_password='213213werQ',
+            fullname='Admin John'
         ),
     ]
     res = await AsyncUserQueries.create_users(users)
